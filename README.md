@@ -2,6 +2,6 @@
 ### PetLife: Virtual Pet Ecosystem
 Anggota Kelompok:
 * Robi'atul Izzati (F1D02310023) 
-* Mustofa Arif (F1D02310083) 
-* Anji Sohib Alawi (F1D02310105) 
+* Mustofa Arif (F1D02310083)
 * Yusri Abdi (F1D02310098)
+* Anji Sohib Alawi (F1D02310105) 
