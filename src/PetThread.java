@@ -11,15 +11,16 @@ public class PetThread extends Thread {
     public void run() {
         while (running) {
             try {
-                pet.decay();
-                Thread.sleep(2000); // decay setiap 2 detik
+                pet.decay(); // Memicu notifyListeners() di VirtualPet
+                Thread.sleep(2000); // Decay setiap 2 detik
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                running = false;
             }
         }
     }
 
     public void stopThread() {
         running = false;
+        this.interrupt(); 
     }
 }
