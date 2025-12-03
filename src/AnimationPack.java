@@ -1,27 +1,17 @@
 public class AnimationPack {
-
-    private String normalGIF;
-    private String eatGIF;
-    private String sleepGIF;
-    private String playGIF;
-
-    public AnimationPack(String normal, String eat, String sleep, String play) {
-        this.normalGIF = normal;
-        this.eatGIF = eat;
-        this.sleepGIF = sleep;
-        this.playGIF = play;
-    }
+    public String idle;
+    public String eat;
+    public String sleep;
+    public String play;
 
     public String getForState(PetState state) {
-        switch (state) {
-            case EAT:
-                return eatGIF;
-            case SLEEP:
-                return sleepGIF;
-            case PLAY:
-                return playGIF;
-            default:
-                return normalGIF;
-        }
+        if (state == null) return idle;
+
+        return switch (state) {
+            case EATING -> eat != null ? eat : idle;
+            case SLEEPING -> sleep != null ? sleep : idle;
+            case PLAYING -> play != null ? play : idle;
+            default -> idle;
+        };
     }
 }

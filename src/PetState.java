@@ -1,7 +1,3 @@
 public enum PetState {
-    IDLE,
-    EAT,
-    SLEEP,
-    PLAY
+    NORMAL, EATING, SLEEPING, PLAYING
 }
-
