@@ -2,11 +2,13 @@ public class MusangPet extends VirtualPet {
     private final AnimationPack anim;
 
     public MusangPet() {
-        anim = new AnimationPack();
-        anim.idle  = "../assets/ferret/normal.jpeg";
-        anim.eat   = "../assets/ferret/eat.jpeg";
-        anim.sleep = "../assets/ferret/sleep.jpeg";
-        anim.play  = "../assets/ferret/play.jpeg";
+        this.anim = new AnimationPack(
+            "assets/ferret/bg.jpeg",
+            "assets/ferret/normal.png",
+            "assets/ferret/eat.png", 
+            "assets/ferret/sleep.png", 
+            "assets/ferret/play.png"
+        );
     }
 
     @Override

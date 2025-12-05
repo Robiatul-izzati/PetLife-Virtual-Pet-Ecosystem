@@ -2,11 +2,13 @@ public class CatPet extends VirtualPet {
     private final AnimationPack anim;
 
     public CatPet() {
-        anim = new AnimationPack();
-        anim.idle  = "../assets/cat/normal.jpeg";
-        anim.eat   = "../assets/cat/eat.jpeg";
-        anim.sleep = "../assets/cat/sleep.jpeg";
-        anim.play  = "../assets/cat/play.jpeg";
+        this.anim = new AnimationPack(
+            "assets/cat/bg.jpeg",
+            "assets/cat/normal.png",
+            "assets/cat/eat.png", 
+            "assets/cat/sleep.png", 
+            "assets/cat/play.png"
+        );
     }
 
     @Override

@@ -1,53 +1,106 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class MainWindow extends JFrame implements PetListener {
 
     private final VirtualPet pet;
     private final ActivityPanel activityPanel;
+    private final ActivityDAO actDao;
 
     private final JLabel petImage = new JLabel();
     private final JProgressBar hungerBar = new JProgressBar(0, 100);
     private final JProgressBar energyBar = new JProgressBar(0, 100);
     private final JProgressBar moodBar = new JProgressBar(0, 100);
 
-    private Timer actionResetTimer;
+    private Image backgroundImage;
+
     private PetThread petThread;
+    
+    private final JDialog logDialog; 
 
     public MainWindow(VirtualPet p, ActivityDAO actDao) {
 
         this.pet = p;
+        this.actDao = actDao;
         pet.addListener(this);
 
         setTitle("PetLife - " + pet.getSpecies());
         setSize(900, 560);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
         setContentPane(new GradientPanel());
         setLayout(new BorderLayout(12, 12));
+
+        // Inisialisasi thread dan dialog
+        this.petThread = new PetThread(
+            pet,
+            new PetDAO(Database.getConnection()), 
+            actDao
+        );
+        this.activityPanel = new ActivityPanel(actDao);
+        logDialog = new JDialog(this, "Aktivitas Pet", false);
+        logDialog.setSize(260, 500);
+        logDialog.setLocationRelativeTo(this);
+        logDialog.add(new JScrollPane(activityPanel));
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                exitToSelectionScreen();
+            }
+        });
 
         // ===== TOP BUTTONS =====
         JPanel top = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         top.setOpaque(false);
 
+        Font buttonFont = new Font("SansSerif", Font.BOLD, 16);
         RoundedButton feed = new RoundedButton("Feed");
+        feed.setFont(buttonFont);
         RoundedButton play = new RoundedButton("Play");
+        play.setFont(buttonFont);
         RoundedButton sleep = new RoundedButton("Sleep");
+        sleep.setFont(buttonFont);
 
-        RoundedButton backBtn = new RoundedButton("← Kembali");
-        backBtn.setBackground(new Color(200, 60, 90));
+        RoundedButton backBtn = new RoundedButton("← Back");
+        backBtn.setFont(buttonFont);
+        backBtn.setBaseColor(new Color(200, 60, 90)); 
 
         RoundedButton logBtn = new RoundedButton("Log");
+        logBtn.setFont(buttonFont);
         
         top.add(logBtn);
         top.add(feed);
         top.add(play);
         top.add(sleep);
         top.add(backBtn);
-
         add(top, BorderLayout.NORTH);
 
         // ===== CENTER: PET DISPLAY =====
-        JPanel centerPanel = new JPanel(new BorderLayout());
+        
+        // Muat Gambar Background dari Pet yang aktif
+        ImageIcon icon = AnimationLoader.load(pet.getAnimations().getBackgroundPath()); 
+        if (icon != null) {
+            this.backgroundImage = icon.getImage();
+        } else {
+            System.err.println("Gagal memuat latar belakang: " + pet.getAnimations().getBackgroundPath());
+        }
+        
+        // Ganti centerPanel dengan JPanel anonim untuk menggambar Background
+        JPanel centerPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (backgroundImage != null) {
+                    g.drawImage(
+                        backgroundImage, 
+                        0, 0, getWidth(), getHeight(), 
+                        this
+                    );
+                }
+            }
+        };
         centerPanel.setOpaque(false);
 
         petImage.setHorizontalAlignment(SwingConstants.CENTER);
@@ -65,69 +118,52 @@ public class MainWindow extends JFrame implements PetListener {
 
         add(bars, BorderLayout.SOUTH);
 
-        activityPanel = new ActivityPanel(actDao);
-
-        // JDialog logDialog = new JDialog(this, "Aktivitas Pet", false);
-        // logDialog.setSize(260, 500);
-        // logDialog.setLocationRelativeTo(this);
-        // logDialog.add(new JScrollPane(activityPanel));
-
-        // ===== BUTTON ACTIONS =====
+        // ===== ACTION LISTENERS =====
         feed.addActionListener(e -> {
+            if (pet.getState() == PetState.SLEEPING) {
+                JOptionPane.showMessageDialog(this, pet.getSpecies() + " sedang tidur!", "Tidak Bisa Beraksi", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             pet.feed();
-            try { actDao.logActivity("Pet diberi makan"); } catch (Exception ignore) {}
-            scheduleReset();
+            try { actDao.logActivity(pet.getSpecies() + " diberi makan"); } catch (Exception ignore) {}
             activityPanel.reload();
         });
 
         play.addActionListener(e -> {
+            if (pet.getState() == PetState.SLEEPING) {
+                JOptionPane.showMessageDialog(this, pet.getSpecies() + " sedang tidur!", "Tidak Bisa Beraksi", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             pet.play();
-            try { actDao.logActivity("Pet diajak bermain"); } catch (Exception ignore) {}
-            scheduleReset();
+            try { actDao.logActivity(pet.getSpecies() + " diajak bermain"); } catch (Exception ignore) {}
             activityPanel.reload();
         });
 
         sleep.addActionListener(e -> {
             pet.sleep();
-            try { actDao.logActivity("Pet tidur"); } catch (Exception ignore) {}
-            scheduleReset();
+            try { actDao.logActivity(pet.getSpecies() + " tidur"); } catch (Exception ignore) {}
             activityPanel.reload();
         });
 
         logBtn.addActionListener(e -> {
-            activityPanel.reload(); // refresh isi log
-            // logDialog.setVisible(true);
+            activityPanel.reload();
+            logDialog.setVisible(true);
         });
-
-        // ===== BACK BUTTON =====
-        backBtn.addActionListener(e -> {
-            dispose();
-            new PetSelectionScreen();
-        });
-
-        // ===== ANIMATION LOOP =====
-        new Timer(120, e -> updateAnimation()).start();
-
+        
+        backBtn.addActionListener(e -> exitToSelectionScreen());
+        
+        // ===== STARTUP =====
+        
         refreshBars();
+        updateAnimation();
         setLocationRelativeTo(null);
         setVisible(true);
-
-        petThread = new PetThread(
-            pet,
-            new PetDAO(Database.getConnection()),
-            actDao
-        );
         petThread.start();
-
-        backBtn.addActionListener(e -> {
-            petThread.stopThread();
-            dispose();
-            new PetSelectionScreen();
-        });
     }
 
     // ===== UTILITY PANEL FOR LABEL + PROGRESSBAR =====
     private JPanel labeled(String t, JProgressBar b) {
+        // ... (Logika labeled tetap sama)
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
         JLabel lbl = new JLabel(t, SwingConstants.CENTER);
@@ -138,32 +174,39 @@ public class MainWindow extends JFrame implements PetListener {
     }
 
     private void refreshBars() {
+        // ... (Logika refreshBars tetap sama)
         hungerBar.setValue(pet.getHunger());
         energyBar.setValue(pet.getEnergy());
         moodBar.setValue(pet.getMood());
+        
+        hungerBar.setForeground(pet.getHunger() > 20 ? Color.GREEN.darker() : Color.RED);
+        energyBar.setForeground(pet.getEnergy() > 20 ? Color.BLUE.darker() : Color.RED);
+        moodBar.setForeground(pet.getMood() > 20 ? new Color(150, 0, 150) : Color.RED);
     }
 
     private void updateAnimation() {
         String path = pet.getAnimations().getForState(pet.getState());
 
-        // load GIF
         ImageIcon icon = AnimationLoader.load(path);
-        petImage.setIcon(icon);
+        if (icon != null) {
+            petImage.setIcon(icon);
+        } else {
+            petImage.setIcon(null);
+            petImage.setText("Image Error: " + path);
+        }
     }
-
-    private void scheduleReset() {
-        if (actionResetTimer != null && actionResetTimer.isRunning())
-            actionResetTimer.stop();
-
-        actionResetTimer = new Timer(2000, e -> pet.resetState());
-        actionResetTimer.setRepeats(false);
-        actionResetTimer.start();
+    
+    private void exitToSelectionScreen() {
+        if (petThread != null) petThread.stopThread();
+        dispose();
+        new PetSelectionScreen();
     }
 
     @Override
     public void onPetUpdated(VirtualPet p, int before, int after, String action) {
         SwingUtilities.invokeLater(() -> {
             refreshBars();
+            updateAnimation();
             activityPanel.reload();
         });
     }

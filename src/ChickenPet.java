@@ -2,11 +2,13 @@ public class ChickenPet extends VirtualPet {
     private final AnimationPack anim;
 
     public ChickenPet() {
-        anim = new AnimationPack();
-        anim.idle  = "../assets/chicken/normal.jpeg";
-        anim.eat   = "../assets/chicken/eat.jpeg";
-        anim.sleep = "../assets/chicken/sleep.jpeg";
-        anim.play  = "../assets/chicken/play.jpeg";
+        this.anim = new AnimationPack(
+            "assets/chicken/bg.jpeg",
+            "assets/chicken/normal.png",
+            "assets/chicken/eat.png", 
+            "assets/chicken/sleep.png", 
+            "assets/chicken/play.png"
+        );
     }
 
     @Override
