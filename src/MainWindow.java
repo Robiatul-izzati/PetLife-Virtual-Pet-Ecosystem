@@ -2,6 +2,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 public class MainWindow extends JFrame implements PetListener {
 
@@ -15,6 +22,7 @@ public class MainWindow extends JFrame implements PetListener {
     private final JProgressBar moodBar = new JProgressBar(0, 100);
 
     private Image backgroundImage;
+    private Clip clip;
 
     private PetThread petThread;
     
@@ -150,15 +158,42 @@ public class MainWindow extends JFrame implements PetListener {
             logDialog.setVisible(true);
         });
         
-        backBtn.addActionListener(e -> exitToSelectionScreen());
+        backBtn.addActionListener(e -> {
+            stopSound();
+            exitToSelectionScreen();
+        });
         
         // ===== STARTUP =====
         
         refreshBars();
         updateAnimation();
+        playSound("./assets/song.wav");
         setLocationRelativeTo(null);
         setVisible(true);
         petThread.start();
+    }
+
+private void playSound(String filePath) {
+        try {
+            File f = new File(filePath);
+            System.out.println("Audio exists? " + f.exists() + " | " + f.getAbsolutePath());
+
+            AudioInputStream audioIn = AudioSystem.getAudioInputStream(f);
+            clip = AudioSystem.getClip();
+            clip.open(audioIn);
+            clip.loop(Clip.LOOP_CONTINUOUSLY); // Musik berulang
+            clip.start();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void stopSound() {
+        if (clip != null) {
+            clip.stop();
+            clip.close();
+            clip = null;
+        }
     }
 
     // ===== UTILITY PANEL FOR LABEL + PROGRESSBAR =====

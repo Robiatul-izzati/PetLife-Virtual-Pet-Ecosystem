@@ -39,14 +39,12 @@ public abstract class VirtualPet {
         energy = Math.max(0, energy - 1);
         mood   = Math.max(0, mood - 1);
 
-        // decay periodically resets action state back to normal
         if (state != PetState.NORMAL)
             state = PetState.NORMAL;
 
         notifyListeners(before, hunger, "DECAY");
     }
 
-    // new helper: reset state to NORMAL without changing stats
     public synchronized void resetState() {
         if (state != PetState.NORMAL) {
             state = PetState.NORMAL;
@@ -61,8 +59,16 @@ public abstract class VirtualPet {
 
     public void addListener(PetListener l) { listeners.add(l); }
 
-    public int getHunger() { return hunger; }
-    public int getEnergy() { return energy; }
-    public int getMood()   { return mood; }
-    public PetState getState() { return state; }
+    public int getHunger() { 
+        return hunger;
+    }
+    public int getEnergy() {
+        return energy;
+    }
+    public int getMood()   {
+        return mood;
+    }
+    public PetState getState() {
+        return state;
+    }
 }

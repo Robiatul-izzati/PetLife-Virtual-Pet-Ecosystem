@@ -13,7 +13,6 @@ public class PetThread extends Thread {
             pet.decay();
             try {
                 dao.savePetStats(pet);
-                //actDao.logActivity("Auto Decay: Hunger=" + pet.getHunger());
             } catch (Exception e) {
                 e.printStackTrace();
             }
