@@ -1,6 +1,6 @@
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import javax.swing.*;
 
 public class ActivityPanel extends JPanel {
 
@@ -38,7 +38,7 @@ public class ActivityPanel extends JPanel {
             area.setText("");
 
             for (String r : rows) {
-                area.insert("• " + r + "\n", 0); // terbaru di atas
+                area.insert("• " + r + "\n", 0); 
             }
 
         } catch (Exception e) {
